@@ -18,7 +18,7 @@ func TestParseCard(t *testing.T) {
 		{"Ts", Ten, Spades, false},
 		{"9h", Nine, Hearts, false},
 		{"2c", Two, Clubs, false},
-		{"as", Ace, Spades, false},  // lowercase should work
+		{"as", Ace, Spades, false},   // lowercase should work
 		{"TD", Ten, Diamonds, false}, // mixed case
 		{"", 0, 0, true},             // empty
 		{"A", 0, 0, true},            // too short

@@ -136,10 +136,10 @@ func TestEvaluate(t *testing.T) {
 
 func TestCompare(t *testing.T) {
 	tests := []struct {
-		name   string
-		hand1  string
-		hand2  string
-		want   int // -1 if hand1 < hand2, 0 if equal, 1 if hand1 > hand2
+		name  string
+		hand1 string
+		hand2 string
+		want  int // -1 if hand1 < hand2, 0 if equal, 1 if hand1 > hand2
 	}{
 		{
 			"Straight flush beats quads",

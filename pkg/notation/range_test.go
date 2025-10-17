@@ -66,7 +66,7 @@ func TestParseRange_SuitedHands(t *testing.T) {
 		input     string
 		wantCount int
 	}{
-		{"AKs", 4},  // As-Ks, Ah-Kh, Ad-Kd, Ac-Kc
+		{"AKs", 4}, // As-Ks, Ah-Kh, Ad-Kd, Ac-Kc
 		{"AQs", 4},
 		{"T9s", 4},
 	}
@@ -180,10 +180,10 @@ func TestParseRange_MultipleHands(t *testing.T) {
 		input     string
 		wantCount int
 	}{
-		{"AA,KK", 12},          // 6 + 6
-		{"AA,KK,AKs", 16},      // 6 + 6 + 4
-		{"AA,AKs,AKo", 22},     // 6 + 4 + 12
-		{"KK-JJ,AKs,AQo", 34},  // KK-JJ(18) + AKs(4) + AQo(12) = 34
+		{"AA,KK", 12},         // 6 + 6
+		{"AA,KK,AKs", 16},     // 6 + 6 + 4
+		{"AA,AKs,AKo", 22},    // 6 + 4 + 12
+		{"KK-JJ,AKs,AQo", 34}, // KK-JJ(18) + AKs(4) + AQo(12) = 34
 	}
 
 	for _, tt := range tests {
@@ -226,14 +226,14 @@ func TestParseRange_Errors(t *testing.T) {
 		input   string
 		wantErr bool
 	}{
-		{"", true},              // empty
-		{"A", true},             // too short
-		{"AK", true},            // ambiguous (need s or o)
-		{"AKx", true},           // invalid indicator
-		{"AA-KKo", true},        // mismatched suited/offsuit
-		{"AKs-AQo", true},       // mismatched suited/offsuit
-		{"XX", true},            // invalid ranks
-		{"AK-KQ", true},         // invalid range (first rank doesn't match)
+		{"", true},        // empty
+		{"A", true},       // too short
+		{"AK", true},      // ambiguous (need s or o)
+		{"AKx", true},     // invalid indicator
+		{"AA-KKo", true},  // mismatched suited/offsuit
+		{"AKs-AQo", true}, // mismatched suited/offsuit
+		{"XX", true},      // invalid ranks
+		{"AK-KQ", true},   // invalid range (first rank doesn't match)
 	}
 
 	for _, tt := range tests {

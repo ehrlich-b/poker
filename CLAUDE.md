@@ -2,6 +2,19 @@
 
 Project-specific instructions for working on the poker solver.
 
+## CRITICAL: Always Use the Makefile
+
+**DO NOT run `go test`, `go build`, or `go` commands directly.** ALWAYS use the Makefile.
+
+**Common commands:**
+- `make test` - Run all tests
+- `make bench` - Run benchmarks
+- `make check` - Format, vet, and test (use before committing)
+- `make build` - Build the binary
+- `make help` - See all available targets
+
+**Why:** The Makefile ensures consistent builds, proper flags, and correct formatting. Running bare `go` commands bypasses project standards.
+
 ## Core Philosophy
 
 **"Good enough beats perfect"** - Build a grandmaster-level solver in seconds, not a research tool in hours.

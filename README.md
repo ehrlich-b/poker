@@ -18,11 +18,13 @@ A CLI tool (and future WASM library) that:
 - Outputs exploitability-bounded GTO strategies in seconds
 - Compiles to native binary or WebAssembly with `go build`
 
-## What This Isn't
+## Design Approach
 
-- ❌ A full multi-street preflop→river solver (use PioSOLVER/GTO+ for that)
-- ❌ A real-time poker bot (ethical concerns + complexity)
-- ❌ A hand history analyzer (focused on solving, not database analysis)
+**Incremental complexity:** We build the solver street-by-street (river → turn → flop → multi-street), validating correctness at each phase before adding complexity.
+
+**Real-time performance:** Target sub-10s solves for single-street decisions, making GTO analysis practical during actual play preparation and study.
+
+**Full-spectrum solving:** Provide reasonable probability calculations at any game phase—river, turn, flop, or full game trees—with exploitability bounds appropriate to each scenario.
 
 ## Performance Targets
 
