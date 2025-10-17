@@ -2,7 +2,20 @@
 
 ## Current Status: v0.1 River Solver (In Progress)
 
-**Last Updated:** 2025-10-16
+**Last Updated:** 2025-10-16 - End of Session 1
+
+### **Session 1 Summary (2025-10-16):**
+**Completed:**
+- ✅ Project scaffolding (README, DESIGN, CLAUDE, Makefile, Go module)
+- ✅ pkg/cards - Full hand evaluation with tests & benchmarks (~5μs per eval)
+- ✅ pkg/notation - Range parser + core types (100% tested)
+  - Range parser: `AA,KK-JJ,AKs,AQo` → all combos
+  - Action types, GameState, Position/Street enums
+  - 25 test functions, 0 failures
+
+**Status:** ~40% of v0.1 complete (2 of 5 components done)
+
+**Next:** Position FEN parser → Game tree builder → CFR solver → CLI
 
 ---
 
@@ -224,9 +237,26 @@ BenchmarkParseCard:               ~8 ns/op       0 B/op       0 allocs/op
 
 ## 🎯 Next Session Goals
 
-1. **Immediate:** Implement `pkg/notation` range parser
-2. **This week:** Complete v0.1 river solver (all 5 components)
-3. **This month:** Start v0.2 turn solver
+### **Session 2 (Tomorrow/Next Time):**
+1. **Position FEN Parser** - Parse `"BTN:AA,KK/BB:QQ|P20|Kh9s4c7d2s|>BTN"` → `GameState`
+   - Implement `ParsePosition()` in `pkg/notation/parser.go`
+   - Handle pot-relative bet sizing (`b0.5p` → calculate based on pot)
+   - Parse action history and calculate current pot state
+   - Write comprehensive tests
+
+2. **pkg/tree** - Game Tree Builder
+   - Define `TreeNode` struct
+   - Implement action generator (check, bet sizes, all-in)
+   - Build single-decision river tree
+   - Calculate payoffs at terminal nodes
+
+### **This Week:**
+- Complete v0.1 river solver (all 5 components)
+- Get first end-to-end solve working
+
+### **This Month:**
+- Polish v0.1, optimize, document
+- Start v0.2 turn solver
 
 ---
 
