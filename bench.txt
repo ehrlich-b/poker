@@ -1,0 +1,18 @@
+goos: linux
+goarch: amd64
+pkg: github.com/behrlich/poker-solver/pkg/cards
+cpu: Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz
+BenchmarkEvaluate/AllHandTypes-12         	   25574	     48034 ns/op	   28056 B/op	     668 allocs/op
+BenchmarkEvaluate/Royal_flush-12          	  207816	      5662 ns/op	    3360 B/op	      80 allocs/op
+BenchmarkEvaluate/Quad_aces-12            	  203750	      6010 ns/op	    3528 B/op	      84 allocs/op
+BenchmarkEvaluate/Full_house-12           	  192902	      5586 ns/op	    3528 B/op	      84 allocs/op
+BenchmarkEvaluate/Flush-12                	  236565	      5308 ns/op	    3528 B/op	      84 allocs/op
+BenchmarkEvaluate/Straight-12             	  240027	      5288 ns/op	    3528 B/op	      84 allocs/op
+BenchmarkEvaluate/Two_pair-12             	  200008	      5242 ns/op	    3528 B/op	      84 allocs/op
+BenchmarkEvaluate/One_pair-12             	  246055	      5172 ns/op	    3528 B/op	      84 allocs/op
+BenchmarkEvaluate/High_card-12            	  218660	      5535 ns/op	    3528 B/op	      84 allocs/op
+BenchmarkCompare-12                       	1000000000	         1.096 ns/op	       0 B/op	       0 allocs/op
+BenchmarkParseCard-12                     	144270115	         8.239 ns/op	       0 B/op	       0 allocs/op
+BenchmarkParseCards-12                    	11339356	       104.4 ns/op	      16 B/op	       1 allocs/op
+PASS
+ok  	github.com/behrlich/poker-solver/pkg/cards	16.262s
