@@ -73,7 +73,12 @@ clean:
 # Build WebAssembly binary
 wasm:
 	@echo "Building WASM binary..."
-	GOOS=js GOARCH=wasm go build -ldflags="-s -w" -o poker-solver.wasm ./wasm
+	@mkdir -p web
+	GOOS=js GOARCH=wasm go build -ldflags="-s -w" -o web/poker-solver.wasm ./cmd/wasm
+	@echo "Copying wasm_exec.js..."
+	@cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" web/wasm_exec.js 2>/dev/null || \
+		cp "$$(go env GOROOT)/misc/wasm/wasm_exec.js" web/wasm_exec.js
+	@echo "WASM build complete! Files in web/"
 
 # Run tests in verbose mode with race detection
 test-race:

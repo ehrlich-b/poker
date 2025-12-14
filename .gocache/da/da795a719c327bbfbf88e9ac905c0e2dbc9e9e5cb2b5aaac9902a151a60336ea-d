@@ -1,0 +1,4 @@
+./integration_flop_test.go
+./integration_geometric_test.go
+./integration_range_test.go
+./integration_test.go

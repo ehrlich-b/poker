@@ -1,0 +1,7 @@
+# test log
+getenv TMPDIR
+open /tmp/TestStrategyProfile_SaveAndLoad4142041696/001/strategy.json
+stat /tmp/TestStrategyProfile_SaveAndLoad4142041696/001/strategy.json
+open /tmp/TestStrategyProfile_SaveAndLoad4142041696/001/strategy.json
+open /tmp
+open /nonexistent/path/to/file.json

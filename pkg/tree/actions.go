@@ -8,7 +8,18 @@ import (
 type ActionConfig struct {
 	// BetSizes are pot-relative bet sizes (e.g., 0.5 = 50% pot, 1.0 = pot-sized)
 	// Empty slice means no betting allowed (e.g., facing a bet)
+	// Ignored if GeometricSizing is set
 	BetSizes []float64
+
+	// GeometricSizing, if set, calculates bet sizes geometrically to achieve target pot
+	// When set, overrides BetSizes
+	// Optional - if nil, uses BetSizes instead
+	GeometricSizing *GeometricSizing
+
+	// NumGeometricSizes specifies how many bet sizes to generate when using geometric sizing
+	// Default: 1 (just the geometric mean)
+	// Common: 2 or 3 (e.g., [0.75×geo, 1.25×geo] or [0.66×geo, geo, 1.5×geo])
+	NumGeometricSizes int
 
 	// AllowCheck is true if checking is a legal action
 	AllowCheck bool
@@ -43,8 +54,22 @@ func GenerateActions(pot float64, stack float64, lastAction *notation.Action, co
 		actions = append(actions, notation.Action{Type: notation.Check})
 	}
 
-	// Generate bet actions based on pot-relative sizes
-	for _, sizeFraction := range config.BetSizes {
+	// Determine bet size fractions (either geometric or fixed)
+	var betSizeFractions []float64
+	if config.GeometricSizing != nil {
+		// Use geometric sizing
+		numSizes := config.NumGeometricSizes
+		if numSizes <= 0 {
+			numSizes = 1 // Default to single geometric bet size
+		}
+		betSizeFractions = config.GeometricSizing.CalculateBetSizes(pot, numSizes)
+	} else {
+		// Use fixed bet sizes from config
+		betSizeFractions = config.BetSizes
+	}
+
+	// Generate bet actions based on calculated sizes
+	for _, sizeFraction := range betSizeFractions {
 		betAmount := pot * sizeFraction
 
 		// Cap bet at remaining stack (all-in)
@@ -64,7 +89,7 @@ func GenerateActions(pot float64, stack float64, lastAction *notation.Action, co
 	}
 
 	// Always include all-in as an option if stack > 0 and we have bet sizes
-	if stack > 0.01 && len(config.BetSizes) > 0 {
+	if stack > 0.01 && len(betSizeFractions) > 0 {
 		// Check if all-in is already included (avoid duplicate)
 		hasAllIn := false
 		for _, action := range actions {

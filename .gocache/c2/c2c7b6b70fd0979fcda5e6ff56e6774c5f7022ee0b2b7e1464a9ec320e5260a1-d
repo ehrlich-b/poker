@@ -1,0 +1,9 @@
+./cfr.go
+./exploitability.go
+./mccfr.go
+./serialization.go
+./strategy.go
+./cfr_test.go
+./exploitability_test.go
+./mccfr_test.go
+./serialization_test.go

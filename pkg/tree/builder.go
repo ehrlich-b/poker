@@ -3,6 +3,7 @@ package tree
 import (
 	"fmt"
 
+	"github.com/behrlich/poker-solver/pkg/abstraction"
 	"github.com/behrlich/poker-solver/pkg/cards"
 	"github.com/behrlich/poker-solver/pkg/notation"
 )
@@ -10,11 +11,22 @@ import (
 // Builder constructs game trees from GameState
 type Builder struct {
 	Config ActionConfig
+
+	// Optional: Bucketer for card abstraction
+	// If set, info sets will use bucket IDs instead of specific cards
+	// This dramatically reduces tree size for flop/turn solving
+	Bucketer *abstraction.Bucketer
 }
 
 // NewBuilder creates a new tree builder with the given action config
 func NewBuilder(config ActionConfig) *Builder {
 	return &Builder{Config: config}
+}
+
+// SetBucketer sets the bucketer for card abstraction
+// When a bucketer is set, info sets will use bucket IDs instead of specific cards
+func (b *Builder) SetBucketer(bucketer *abstraction.Bucketer) {
+	b.Bucketer = bucketer
 }
 
 // Build constructs a game tree for a specific combo vs combo matchup
@@ -39,6 +51,58 @@ func (b *Builder) Build(gs *notation.GameState, combo0 notation.Combo, combo1 no
 	combos := [2]notation.Combo{combo0, combo1}
 
 	return b.buildNode(gs.Board, gs.ActionHistory, gs.Pot, stacks, gs.ToAct, combos), nil
+}
+
+// BuildRange constructs a game tree for range-vs-range solving
+// The root is a chance node that samples combo pairs from the ranges
+// Returns a tree where each child of the root represents a specific combo matchup
+func (b *Builder) BuildRange(gs *notation.GameState, range0 []notation.Combo, range1 []notation.Combo) (*TreeNode, error) {
+	// Validate inputs
+	if len(gs.Players) != 2 {
+		return nil, fmt.Errorf("only 2-player games supported")
+	}
+
+	if len(gs.Board) != 5 && len(gs.Board) != 4 && len(gs.Board) != 3 {
+		return nil, fmt.Errorf("only postflop (3-5 board cards) supported")
+	}
+
+	// Create root chance node
+	stacks := [2]float64{gs.Players[0].Stack, gs.Players[1].Stack}
+	root := NewChanceNode(gs.Pot, gs.Board, stacks)
+
+	// Build game tree for each valid combo pair
+	validPairs := 0
+	for _, combo0 := range range0 {
+		for _, combo1 := range range1 {
+			// Check for card conflicts
+			if err := b.validateCards(gs.Board, combo0, combo1); err != nil {
+				// Skip invalid pairs (cards conflict with board or each other)
+				continue
+			}
+
+			// Build tree for this combo pair
+			combos := [2]notation.Combo{combo0, combo1}
+			child := b.buildNode(gs.Board, gs.ActionHistory, gs.Pot, stacks, gs.ToAct, combos)
+
+			// Add as child with key "combo0:combo1"
+			comboKey := fmt.Sprintf("%s:%s", combo0.String(), combo1.String())
+			root.Children[comboKey] = child
+
+			validPairs++
+		}
+	}
+
+	if validPairs == 0 {
+		return nil, fmt.Errorf("no valid combo pairs (all conflict with board or each other)")
+	}
+
+	// Set uniform probability for each outcome
+	prob := 1.0 / float64(validPairs)
+	for key := range root.Children {
+		root.ChanceProbabilities[key] = prob
+	}
+
+	return root, nil
 }
 
 // buildNode recursively builds a node in the game tree
@@ -69,6 +133,15 @@ func (b *Builder) buildNode(
 
 	// Terminal: showdown (both players checked or someone called)
 	if b.isShowdown(history) {
+		// If we're on the flop (3 cards), create a rollout node that will sample turn+river
+		if len(board) == 3 {
+			return NewRolloutNode(pot, board, stacks, combos)
+		}
+		// If we're on the turn (4 cards), create a rollout node that will sample river cards
+		if len(board) == 4 {
+			return NewRolloutNode(pot, board, stacks, combos)
+		}
+		// River (5 cards): evaluate immediately
 		payoffs := b.calculateShowdownPayoffs(board, combos, pot)
 		return NewTerminalNode(pot, payoffs, board, stacks)
 	}
@@ -79,7 +152,15 @@ func (b *Builder) buildNode(
 
 	// Generate info set key for this player
 	playerPos := []notation.Position{notation.BTN, notation.BB}[toAct]
-	infoSet := GetInfoSet(board, history, playerPos, holeCards)
+	var infoSet string
+	if b.Bucketer != nil {
+		// Use card abstraction: bucket the hand and use bucket ID
+		bucketID := b.Bucketer.BucketCombo(playerCombo)
+		infoSet = GetInfoSetBucketed(board, history, playerPos, bucketID)
+	} else {
+		// No abstraction: use specific cards
+		infoSet = GetInfoSet(board, history, playerPos, holeCards)
+	}
 
 	// Generate legal actions
 	actions := GenerateActions(pot, stacks[toAct], lastAction, b.Config)

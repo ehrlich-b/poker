@@ -1,0 +1,5 @@
+./card.go
+./hand.go
+./card_test.go
+./hand_bench_test.go
+./hand_test.go

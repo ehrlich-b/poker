@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Solver - GTO Learning Platform</title>
+    <script src="/wasm_exec.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Poker Solver</h1>
+        <div class="subtitle">WebAssembly Demo - v0.6.0</div>
+
+        <div id="statusBar" class="status info">Initializing solver...</div>
+
+        <div class="card">
+            <label for="positionInput">Position (Poker FEN notation):</label>
+            <input
+                type="text"
+                id="positionInput"
+                placeholder="BTN:AdAc:S100/BB:QdQh:S100|P10|Kh9s4c7d2s|>BTN"
+                value="BTN:AdAc:S100/BB:QdQh:S100|P10|Kh9s4c7d2s|>BTN"
+            />
+
+            <label for="iterationsInput" style="margin-top: 15px;">Iterations:</label>
+            <input
+                type="number"
+                id="iterationsInput"
+                min="100"
+                max="50000"
+                step="100"
+                value="5000"
+            />
+
+            <div style="margin-top: 20px;">
+                <button id="solveBtn" disabled>Solve</button>
+            </div>
+
+            <div class="examples">
+                <div class="example" data-example-id="0">
+                    <div class="example-label">River (AA vs QQ)</div>
+                    <div class="example-value">Simple combo vs combo</div>
+                </div>
+                <div class="example" data-example-id="1">
+                    <div class="example-label">Turn (AA vs QQ)</div>
+                    <div class="example-value">MCCFR with rollout</div>
+                </div>
+                <div class="example" data-example-id="2">
+                    <div class="example-label">Range vs Range</div>
+                    <div class="example-value">AA,KK vs QQ,JJ</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="progressContainer" class="hidden">
+            <div class="progress">
+                <div id="progressBar" class="progress-bar" style="width: 0%">0%</div>
+            </div>
+        </div>
+
+        <div id="resultContainer" class="card hidden">
+            <label>Result:</label>
+            <div id="resultOutput" class="result"></div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

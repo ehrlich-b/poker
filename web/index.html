@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Solver - WASM Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #4a9eff;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .card {
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #e0e0e0;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.95em;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95em;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #3a8eef;
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .status.info {
+            background: #2a4a6a;
+            border: 1px solid #4a9eff;
+            color: #4a9eff;
+        }
+
+        .status.success {
+            background: #2a4a2a;
+            border: 1px solid #4eff4a;
+            color: #4eff4a;
+        }
+
+        .status.error {
+            background: #4a2a2a;
+            border: 1px solid #ff4a4a;
+            color: #ff4a4a;
+        }
+
+        .progress {
+            width: 100%;
+            height: 24px;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4a9eff 0%, #3a8eef 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .result {
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            padding: 15px;
+            font-size: 0.85em;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .example {
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            font-size: 0.85em;
+        }
+
+        .example:hover {
+            border-color: #4a9eff;
+        }
+
+        .example-label {
+            color: #4a9eff;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .example-value {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Poker Solver</h1>
+        <div class="subtitle">WebAssembly Demo - v0.4.0</div>
+
+        <div id="statusBar" class="status info">Initializing solver...</div>
+
+        <div class="card">
+            <label for="positionInput">Position (Poker FEN notation):</label>
+            <input
+                type="text"
+                id="positionInput"
+                placeholder="BTN:AdAc:S100/BB:QdQh:S100|P10|Kh9s4c7d2s|>BTN"
+                value="BTN:AdAc:S100/BB:QdQh:S100|P10|Kh9s4c7d2s|>BTN"
+            />
+
+            <label for="iterationsInput" style="margin-top: 15px;">Iterations:</label>
+            <input
+                type="number"
+                id="iterationsInput"
+                min="100"
+                max="50000"
+                step="100"
+                value="5000"
+            />
+
+            <label for="presetSelect" style="margin-top: 15px;">Quality Preset:</label>
+            <select id="presetSelect">
+                <option value="mobile">Mobile-safe (2k river, 5k turn, 10k flop)</option>
+                <option value="balanced" selected>Balanced (5k river, 10k turn, 20k flop)</option>
+                <option value="deep">Desktop-deep (15k river, 30k turn, 50k flop)</option>
+            </select>
+
+            <div style="margin-top: 20px;">
+                <button id="solveBtn" disabled>Solve</button>
+                <button id="cancelBtn" disabled style="margin-left: 10px; background: #ff5c5c;">Cancel</button>
+            </div>
+
+            <div class="examples">
+                <div class="example" onclick="loadExample(0)">
+                    <div class="example-label">River (AA vs QQ)</div>
+                    <div class="example-value">Simple combo vs combo</div>
+                </div>
+                <div class="example" onclick="loadExample(1)">
+                    <div class="example-label">Turn (AA vs QQ)</div>
+                    <div class="example-value">MCCFR with rollout</div>
+                </div>
+                <div class="example" onclick="loadExample(2)">
+                    <div class="example-label">Range vs Range</div>
+                    <div class="example-value">AA,KK vs QQ,JJ</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="progressContainer" class="hidden">
+            <div class="progress">
+                <div id="progressBar" class="progress-bar" style="width: 0%">0%</div>
+            </div>
+        </div>
+
+        <div id="resultContainer" class="card hidden">
+            <label>Result:</label>
+            <div id="resultOutput" class="result"></div>
+        </div>
+    </div>
+
+    <script src="solver-client.js"></script>
+    <script>
+        const examples = [
+            {
+                position: "BTN:AdAc:S100/BB:QdQh:S100|P10|Kh9s4c7d2s|>BTN",
+                iterations: 5000
+            },
+            {
+                position: "BTN:AdAc:S100/BB:QdQh:S100|P10|Kh9s4c7d|>BTN",
+                iterations: 3000
+            },
+            {
+                position: "BTN:AA,KK:S100/BB:QQ,JJ:S100|P10|Th9h2c5d8s|>BTN",
+                iterations: 2000
+            }
+        ];
+
+        function loadExample(index) {
+            const example = examples[index];
+            document.getElementById('positionInput').value = example.position;
+            document.getElementById('iterationsInput').value = example.iterations;
+        }
+
+        // Preset handling
+        const presetMap = {
+            mobile: { river: 2000, turn: 5000, flop: 10000 },
+            balanced: { river: 5000, turn: 10000, flop: 20000 },
+            deep: { river: 15000, turn: 30000, flop: 50000 }
+        };
+
+        function detectStreet(position) {
+            const parts = position.split('|');
+            if (parts.length < 3) return 'river';
+            const board = parts[2] || '';
+            const clean = board.replace(/\//g, '');
+            const cards = Math.floor(clean.length / 2);
+            if (cards === 3) return 'flop';
+            if (cards === 4) return 'turn';
+            return 'river';
+        }
+
+        document.getElementById('presetSelect').addEventListener('change', () => {
+            const position = document.getElementById('positionInput').value;
+            const street = detectStreet(position);
+            const preset = presetMap[document.getElementById('presetSelect').value] || presetMap.balanced;
+            document.getElementById('iterationsInput').value = preset[street];
+        });
+
+        // Cancel button
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            client.cancel();
+        });
+    </script>
+</body>
+</html>

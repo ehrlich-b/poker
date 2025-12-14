@@ -1,0 +1,187 @@
+/**
+ * Main stylesheet for Poker Solver web UI
+ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    background: #1a1a1a;
+    color: #e0e0e0;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: #4a9eff;
+    margin-bottom: 10px;
+    font-size: 2em;
+}
+
+.subtitle {
+    color: #888;
+    margin-bottom: 30px;
+    font-size: 0.9em;
+}
+
+.card {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    color: #aaa;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+input, textarea {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    color: #e0e0e0;
+    padding: 12px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.95em;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+button {
+    background: #4a9eff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95em;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: #3a8eef;
+}
+
+button:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
+
+.status {
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 0.9em;
+}
+
+.status.info {
+    background: #2a4a6a;
+    border: 1px solid #4a9eff;
+    color: #4a9eff;
+}
+
+.status.success {
+    background: #2a4a2a;
+    border: 1px solid #4eff4a;
+    color: #4eff4a;
+}
+
+.status.error {
+    background: #4a2a2a;
+    border: 1px solid #ff4a4a;
+    color: #ff4a4a;
+}
+
+.progress {
+    width: 100%;
+    height: 24px;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4a9eff 0%, #3a8eef 100%);
+    transition: width 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.result {
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    padding: 15px;
+    font-size: 0.85em;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.examples {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.example {
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    font-size: 0.85em;
+}
+
+.example:hover {
+    border-color: #4a9eff;
+}
+
+.example-label {
+    color: #4a9eff;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.example-value {
+    color: #aaa;
+    font-size: 0.9em;
+}
+
+.hidden {
+    display: none;
+}

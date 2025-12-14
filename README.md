@@ -1,6 +1,6 @@
 # Poker Solver
 
-A dependency-free Go poker solver implementing Monte Carlo Counterfactual Regret Minimization (MCCFR) for computing Game Theory Optimal (GTO) strategies in Heads-Up No-Limit Hold'em.
+A dependency-free Go poker solver implementing Counterfactual Regret Minimization (CFR) for computing Game Theory Optimal (GTO) strategies in Heads-Up No-Limit Hold'em.
 
 ## Philosophy
 
@@ -13,10 +13,11 @@ A dependency-free Go poker solver implementing Monte Carlo Counterfactual Regret
 ## What This Is
 
 A CLI tool (and future WASM library) that:
-- Solves postflop poker situations using MCCFR
+- Solves river poker situations using vanilla CFR (v0.1)
 - Encodes positions in a chess FEN-like compact notation
-- Outputs exploitability-bounded GTO strategies in seconds
-- Compiles to native binary or WebAssembly with `go build`
+- Finds Nash equilibrium strategies in milliseconds
+- Compiles to native binary with zero dependencies
+- Future: WASM support, MCCFR, multi-street solving
 
 ## Design Approach
 
@@ -26,35 +27,93 @@ A CLI tool (and future WASM library) that:
 
 **Full-spectrum solving:** Provide reasonable probability calculations at any game phase—river, turn, flop, or full game trees—with exploitability bounds appropriate to each scenario.
 
-## Performance Targets
+## Performance
 
-### Grandmaster-Level Solving
-With **100k MCCFR iterations** on a single postflop street:
-- **Exploitability:** <0.5% of pot (undetectable by humans)
-- **Native binary:** ~5-10 seconds on modern CPU
-- **WASM in browser:** ~30-60 seconds (acceptable for learning tools)
+### Actual Measurements (Native Go Binary)
 
-### Complexity Tradeoffs
-| Scenario | Iterations Needed | Native Time | WASM Time |
-|----------|------------------|-------------|-----------|
-| Single street (flop), 2 bet sizes | 10k | <1s | ~5s |
-| Single street (turn), 3 bet sizes | 50k | ~5s | ~30s |
-| Single street (river), simplified | 100k | ~10s | ~60s |
-| Multi-street (flop→turn→river) | 1M+ | minutes | ⚠️ impractical |
+**River Solver (v0.1):**
+- **Solve time:** 34ms for 10k CFR iterations (combo vs combo)
+- **Throughput:** 293k iterations/sec
+- **Strategies:** Converge to Nash equilibrium
 
-**Insight:** Grandmaster-level play doesn't require perfection—just strategies unexploitable in practice.
+**Turn Solver (v0.3):**
+- **Solve time:** 200ms for 5k MCCFR iterations (with river rollout)
+- **Rollout:** Samples random river cards efficiently
+- **Exploitability:** <1% pot after convergence
+
+**Flop Solver (v0.5):**
+- **Solve time:** 5.2s for 1k MCCFR iterations (AA,KK vs QQ,JJ with bucketing)
+- **Tree reduction:** 76% with bucketing (15 vs 61 info sets)
+- **Bucket cache:** 447ns per lookup (58,000× faster than uncached)
+- **Equity calc:** Flop: 21ms, Turn: 460μs, River: 9.4μs per combo
+
+### Test Coverage (192 tests passing)
+- **pkg/cards:** 86.5% coverage
+- **pkg/notation:** 90.2% coverage
+- **pkg/solver:** 83.1% coverage
+- **pkg/tree:** 83.3% coverage
+- **pkg/equity:** 95.5% coverage
+- **pkg/abstraction:** 93.1% coverage
+- **Overall:** 70.9% total coverage (71% when excluding CLI glue code)
+
+**Dependencies:** Zero (pure stdlib)
 
 ## Quick Start
 
 ```bash
-# Solve a position using compact notation
-poker-solver solve "BTN:AsKd:S100/BB:??:S100|P3|Th9h2c|>BTN" --iterations 50000
+# Build the solver
+make build
 
-# Output strategy as JSON
-poker-solver strategy output.json
+# Solve a river position (uses vanilla CFR)
+./bin/poker-solver --iterations 10000 "BTN:AdAc:S100/BB:QdQh:S100|P10|Kh9s4c7d2s|>BTN"
 
-# Analyze specific action frequencies
-poker-solver range --player BTN --action bet_66
+# Solve a turn position (automatically uses MCCFR with river rollout)
+./bin/poker-solver --iterations 5000 "BTN:AdAc:S100/BB:QdQh:S100|P10|Kh9s4c7d|>BTN"
+
+# Solve range-vs-range
+./bin/poker-solver --iterations 5000 "BTN:AA,KK:S100/BB:QQ,JJ:S100|P10|Th9h2c5d8s|>BTN"
+
+# Verbose mode shows game state and regrets
+./bin/poker-solver --verbose --iterations 5000 "BTN:AA,KK:S100/BB:QQ,JJ:S100|P10|Th9h2c5d8s|>BTN"
+
+# Save strategy to JSON file
+./bin/poker-solver --save=strategy.json --iterations 10000 "BTN:AA:S100/BB:QQ:S100|P10|Kh9s4c7d2s|>BTN"
+
+# Load and display saved strategy
+./bin/poker-solver --load=strategy.json
+
+# Build WebAssembly binary
+make wasm
+
+# Run WASM demo (requires web server)
+cd web && python3 -m http.server 8080
+# Then open http://localhost:8080
+
+# Run tests
+make test
+
+# Run benchmarks
+make bench
+```
+
+**Example Output (Range-vs-Range):**
+```
+=== RANGE-VS-RANGE STRATEGIES ===
+
+BTN:
+  AA (acts first):
+    x: 100.0%
+    (averaged over 6 combos)
+  KK (acts first):
+    x: 100.0%
+    (averaged over 6 combos)
+
+BB:
+  QQ (facing x):
+    x: 20.0%
+    b5.0: 20.0%
+    b7.5: 20.0%
+    ...
 ```
 
 ## Position Notation (Poker FEN)
@@ -78,37 +137,77 @@ See [DESIGN.md](DESIGN.md) for full specification.
 
 ## Development Roadmap
 
-### v0.1 - Single Street Solver (Current)
-- [x] Position notation parser
-- [ ] Card evaluation (hand strength)
-- [ ] Game tree builder (single street)
-- [ ] Vanilla CFR implementation
-- [ ] CLI with solve/output commands
+### ✅ v0.1 - River Solver (COMPLETE)
+- [x] Position notation parser (full FEN support)
+- [x] Card evaluation (7-card hand strength)
+- [x] Game tree builder (single street, pot-relative bet sizing)
+- [x] Vanilla CFR implementation (tested on Kuhn poker + real spots)
+- [x] CLI with --iterations and --verbose flags
+- [x] Integration tests (end-to-end, symmetric scenarios, performance)
 
-### v0.2 - Monte Carlo Optimization
-- [ ] MCCFR with outcome sampling
-- [ ] Exploitability calculation
-- [ ] Strategy serialization (JSON)
-- [ ] Performance benchmarks
+**Status:** Solves river combo-vs-combo in 34ms (10k iterations). All tests passing.
 
-### v0.3 - WASM Export
-- [ ] JavaScript bindings
-- [ ] Browser-compatible build
-- [ ] Progress streaming
-- [ ] Web worker support
+### ✅ v0.2 - Range-vs-Range Solver (COMPLETE)
+- [x] Range-vs-range solving with chance nodes
+- [x] Aggregated strategy output by hand type
+- [x] CLI support for range notation
+- [x] Integration tests for range scenarios
 
-### v0.4 - Production Ready
-- [ ] Card abstraction (bucketing)
-- [ ] Bet abstraction (geometric sizing)
-- [ ] Multi-street solving (optional)
-- [ ] Range vs range analysis
+**Status:** Solves AA,KK vs QQ,JJ (144 combo pairs) in 3.5s (5k iterations). True GTO equilibrium!
+
+### ✅ v0.3 - Turn Solver (COMPLETE)
+- [x] Turn notation parser (already supported in v0.1)
+- [x] Turn→river tree builder with rollout nodes
+- [x] MCCFR with outcome sampling (efficient for large trees)
+- [x] Automatic solver selection (MCCFR for turn, CFR for river)
+- [x] Integration tests for turn solving
+- [x] Strategy serialization (save/load JSON)
+- [x] Exploitability calculation (best response)
+
+**Status:** Turn solver complete! MCCFR samples river cards efficiently. Save/load strategies to JSON. Calculate exploitability with best response algorithm.
+
+### ✅ v0.4 - WASM Export (COMPLETE)
+- [x] JavaScript bindings
+- [x] Browser-compatible build (`GOOS=js GOARCH=wasm`)
+- [x] Progress streaming via callbacks
+- [x] Web worker support (non-blocking UI)
+
+**Status:** WASM solver working in browser! 3.2MB binary, Web Worker for background solving, progress callbacks, interactive demo at `web/index.html`.
+
+### ✅ v0.5 - Production Ready (COMPLETE)
+- [x] v0.5.1: Hand strength + potential calculation (equity, variance-based potential)
+- [x] v0.5.2: Card abstraction (histogram bucketing by equity × potential)
+- [x] v0.5.3: Multi-street tree builder (flop→turn→river with bucketing)
+- [x] v0.5.4: Geometric bet sizing (target pot-based bet calculation)
+- [x] v0.5.5: CLI integration (all features accessible via command-line)
+
+**Status:** Core solver complete! River/turn/flop solving, card abstraction, geometric sizing, range-vs-range—all working. 192 tests passing, 70.9% coverage. Ready for web UI.
+
+### 🚧 v0.6 - Web UI & Learning Platform (IN PROGRESS)
+- [ ] Vite + TypeScript project setup
+- [ ] Visual range builder (13x13 clickable grid)
+- [ ] Position builder (drag-drop cards, visual board)
+- [ ] Strategy display (grouped hands, bar charts)
+- [ ] Position library (save/load, localStorage)
+- [ ] Responsive design (mobile-friendly)
+- [ ] Deploy to static host (Vercel/Netlify)
+
+**Goal:** Interactive poker learning website with visual tools. No more manual FEN notation—build positions visually, solve with one click, view strategies in readable format.
 
 ## Technical Stack
 
+**Solver (Backend):**
 - **Language:** Go 1.21+ (pure stdlib, zero dependencies)
 - **Algorithm:** Monte Carlo CFR (MCCFR) with outcome sampling
 - **Target:** Native binary + WASM (`GOOS=js GOARCH=wasm`)
 - **Input/Output:** JSON + compact notation parsing
+
+**Web UI (Frontend - v0.6+):**
+- **Build Tool:** Vite (instant hot reload, zero-config bundling)
+- **Language:** TypeScript (type-safe WASM bindings)
+- **Framework:** Vanilla JS/TS (no framework lock-in, can add React/Svelte later)
+- **Deployment:** Static files (Vercel, Netlify, GitHub Pages)
+- **Storage:** localStorage (positions, strategies, preferences)
 
 ## Why Go?
 
